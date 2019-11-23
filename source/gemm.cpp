@@ -11,7 +11,7 @@ void test1();
 void test2();
 int main(int argc, char** argv)
 {
-    test2();
+    test1();
     return 0;
 }
 void test1()

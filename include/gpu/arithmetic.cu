@@ -24,9 +24,7 @@ __global__ void kernel_matrix_mul_sp(float* C, float* A, float* B,
     const int indexA = row * widthA;
     C[indexC] = 0.0;
     for (int i = 0; i < widthA; i++)
-	{
 		C[indexC] += A[indexA + i] * B[i * widthB + col];
-	}
 }
 
 /**
