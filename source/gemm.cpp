@@ -7,11 +7,24 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+#define F 2.2E3
+#define Time 1E6
+
 void test1();
 void test2();
+
+inline unsigned long long rdtsc(void)
+{
+	unsigned long hi = 0, lo = 0;
+
+	__asm__ __volatile__ ("lfence;rdtsc" : "=a"(lo), "=d"(hi));
+
+	return (((unsigned long long)lo))|(((unsigned long long)hi)<<32);
+}
+
 int main(int argc, char** argv)
 {
-    test1();
+    test2();
     return 0;
 }
 void test1()
@@ -28,6 +41,8 @@ void test1()
 void test2()
 {
     const unsigned int msize = 1024;
+    float alpha = 1.0;
+    float beta = 0.0;
     gemm::MatrixSP C(msize, msize);
     gemm::MatrixSP A(msize, msize);
     gemm::MatrixSP B(msize, msize);
@@ -44,11 +59,15 @@ void test2()
         {
             result(i, j) = 0.0;
             for (int k = 0; k < B.width(); k++)
-                result(i, j) += A(i, k) * B(k, j);
+                result(i, j) += alpha * A(i, k) * B(k, j) + beta * C(i, j);
         }
+    double start,end,elapsed;
     std::printf("start cuda computation...\r\n");
-    cuda_matrix_mul_sp(C, A, B);
-    std::printf("finish cuda computation...\r\n");
+    start = rdtsc();
+    cuda_matrix_mul_sp(alpha, beta, C, A, B);
+    end = rdtsc();
+	elapsed= (end - start)/(F * Time);
+    std::printf("finish cuda computation, elapse %f s\r\n", elapsed);
     //gemm::MatrixSP::mul(C, A, B);
     /* checking result */
     for (int i = 0; i < msize; i++)

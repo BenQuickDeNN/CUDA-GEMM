@@ -10,12 +10,15 @@
 #include <device_launch_parameters.h>
 
 /**
- * @brief cuda kernal -- matrix mul, single precision
+ * @brief cuda kernal -- matrix mul C = alpha * A * B + beta * C, single precision
+ * @param alpha coefficient parameter
+ * @param beta coefficient parameter
  * @param C result
  * @param A matrix A
  * @param B matrix B
 */
-__global__ void kernel_matrix_mul_sp(float* C, float* A, float* B, 
+__global__ void kernel_matrix_mul_sp(float alpha, float beta,
+    float* C, float* A, float* B, 
     unsigned int widthC, unsigned int widthA, unsigned int widthB)
 {
     const int row = threadIdx.y + blockIdx.y * blockDim.y;
@@ -24,18 +27,22 @@ __global__ void kernel_matrix_mul_sp(float* C, float* A, float* B,
     const int indexA = row * widthA;
     C[indexC] = 0.0;
     for (int i = 0; i < widthA; i++)
-		C[indexC] += A[indexA + i] * B[i * widthB + col];
+		C[indexC] += alpha * A[indexA + i] * B[i * widthB + col] + beta * C[indexC];
 }
 
 /**
  * @brief cuda -- matrix mul, single precision
+ * @param alpha coefficient parameter
+ * @param beta coefficient parameter
  * @param C result
  * @param A matrix A
  * @param B matrix B
 */
-void cuda_matrix_mul_sp(gemm::MatrixSP& C, gemm::MatrixSP& A, gemm::MatrixSP& B);
+void cuda_matrix_mul_sp(const float& alpha, const float& beta,
+    gemm::MatrixSP& C, gemm::MatrixSP& A, gemm::MatrixSP& B);
 
-void cuda_matrix_mul_sp(gemm::MatrixSP& C, gemm::MatrixSP& A, gemm::MatrixSP& B)
+void cuda_matrix_mul_sp(const float& alpha, const float& beta,
+    gemm::MatrixSP& C, gemm::MatrixSP& A, gemm::MatrixSP& B)
 {
     if (A.empty() || B.empty() || C.empty())
     {
@@ -72,7 +79,7 @@ void cuda_matrix_mul_sp(gemm::MatrixSP& C, gemm::MatrixSP& A, gemm::MatrixSP& B)
     cudaMemcpy(cuA, (A._element), A.height() * A.width() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(cuB, (B._element), B.height() * B.width() * sizeof(float), cudaMemcpyHostToDevice);
     /* execute kernel */
-    kernel_matrix_mul_sp<<<cudaGridSize, cudaBlockSize>>>(cuC, cuA, cuB, C.width(), A.width(), B.width());
+    kernel_matrix_mul_sp<<<cudaGridSize, cudaBlockSize>>>(alpha, beta, cuC, cuA, cuB, C.width(), A.width(), B.width());
     /* copy data */
     cudaMemcpy(C._element, cuC, C.height() * C.width() * sizeof(float), cudaMemcpyDeviceToHost);
     /* free memory on gpu */
