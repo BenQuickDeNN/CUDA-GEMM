@@ -3,15 +3,17 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${CUDA_PATH}/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "E:\\mingw64\\bin\\gcc.exe",
+            "compilerPath": "${CUDA_PATH}/bin",
             "cStandard": "c11",
+            "cppStandard": "c++11",
             "intelliSenseMode": "clang-x64"
         }
     ],
